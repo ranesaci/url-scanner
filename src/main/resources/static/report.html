@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+
+
+  <head>
+  <style type="text/css">
+	table, th, td {
+		border: 1px solid black;
+		border-collapse: collapse;
+	}
+	
+	th, td {
+		padding: 5px;
+		text-align: left;
+	}
+	
+	th {
+		text-align: left;
+}
+</style>
+    <script  src="https://code.jquery.com/jquery-3.2.1.js"
+      integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE="  crossorigin="anonymous"></script>
+  </head>
+
+  <body onload="loadFetchedDataByUrlId();">
+  <h1>
+  <marquee bgcolor=orange  behavior=alternate> URL Scan Report!!!</marquee>
+   </h1>
+    
+  	<br/>
+    <br/>
+    
+    <div id="urlTable">
+    
+    </div>  
+    
+    </div>
+   
+    <script type="text/javascript">
+    var urlId = qs('urlData');
+    
+    
+    function loadFetchedDataByUrlId(){
+    	
+        
+        $.ajax({
+               url: 'http://localhost:8080/urlId/'+urlId,
+             
+               type: 'GET',
+               contentType: "application/json",
+               jsonpCallback: "jsonRead" ,
+               headers:{'Accept': 'application/json', 'X-Request': 'JSON'},
+               success: function(response) {
+            	   	
+                 
+                   console.log(response);
+                   displayTable(response);
+               },
+               error: function(error) {
+                 
+                   console.log(error);
+               }
+           });
+     }
+    
+    function qs(search_for) {
+		var query = window.location.search.substring(1);
+		var parms = query.split('&');
+		for (var i=0; i<parms.length; i++) {
+			var pos = parms[i].indexOf('=');
+			if (pos > 0  && search_for == parms[i].substring(0,pos)) {
+				return parms[i].substring(pos+1);;
+			}
+		}
+		return "";
+	};
+	
+	function displayTable(urlData){
+    	var table = document.createElement('table');
+    	$("#urlTable").append(table);
+    	
+    	var tblHeader = ['ATTRIBUTE', 'VALUE']; 
+    	var tr = document.createElement('tr');
+    	table.append(tr);
+    	for(var i = 0; i< tblHeader.length; i++){
+    		var th = document.createElement('th');
+    		tr.append(th);
+        ///th.html('url');
+        th.innerHTML = tblHeader[i];
+    	}
+    	
+    	var urlDataFields = ['url', 'redirectUrl', 'submittedOn', 'websiteTitle','websiteBody','imageCount','linkCount']; 
+    	for(var i = 0; i< urlDataFields.length; i++){
+    		var tr = document.createElement('tr');
+        	table.append(tr);
+    		
+    		for(var j = 0; j< tblHeader.length; j++){
+    			var td = document.createElement('td');
+        		tr.append(td);
+        		if(tblHeader[j] == 'ATTRIBUTE'){
+        			td.innerHTML = urlDataFields[i];
+        		}
+        		if(tblHeader[j] == 'VALUE'){
+        			if(urlDataFields[i]=='submittedOn'){
+        				td.innerHTML = FormatJsonDate(urlData[urlDataFields[i]]);
+        			}else{
+        				td.innerHTML = urlData[urlDataFields[i]];
+        			}
+        			
+        			
+        			
+        		}
+        		
+                
+        		
+        	}
+        
+       
+    	}
+    }
+    
+	function FormatJsonDate(jsonDt) 
+    {              
+    	var date =  new Date(jsonDt);                                             
+        //return date.toJSON().slice(0, 10).split("-").reverse().join("/");
+    	return date.toString();
+    }
+    
+    </script>
+    
+    
+  </body>
+
+</html>

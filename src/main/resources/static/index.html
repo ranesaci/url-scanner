@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+
+
+  <head>
+  <style type="text/css">
+	table, th, td {
+		border: 1px solid black;
+		border-collapse: collapse;
+	}
+	
+	th, td {
+		padding: 5px;
+		text-align: left;
+	}
+	
+	th {
+		text-align: left;
+}
+</style>
+    <script  src="https://code.jquery.com/jquery-3.2.1.js"
+      integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE="  crossorigin="anonymous"></script>
+  </head>
+
+  <body onload="loadLastAccessedTableData();">
+   <h1>
+    <marquee bgcolor=orange behavior=alternate> URL Scanner Tool!</marquee>
+   </h1>
+    
+    <div>
+      Enter URL: <input id="urlScanner" type="url"/>
+      <button onclick="submitUrl()">Scan URL!!!</button>
+    </div>
+  
+    <br/>
+      Start Date:  <input type="date" id="sdate" /></tab>
+	  End Date:   <input type="date" id="edate" /></tab>
+       <button onclick="searchUrl()">Search Urls</button>
+    <br/>
+    <br/>
+    
+    <div id="urlTable">
+    
+    </div>
+    
+    <script type="text/javascript">
+    function searchUrl(){
+    	
+    	var sdate = document.getElementById('sdate').value;
+    	var edate = document.getElementById('edate').value;
+    	
+    	
+    
+
+    	if(!Date.parse(sdate) || !Date.parse(edate)){
+    		alert('Please provide start date and end date to search Urls.');
+    		return;
+    	}
+    	
+    	if(Date.parse(sdate) && Date.parse(edate)  && Date.parse(sdate)>= Date.parse(edate) ){
+    		alert('Start Date must be smaller than end date.');
+    		return;
+    	}
+    	
+    	
+    	$.ajax({
+            url: 'http://localhost:8080/list',
+          
+            type: 'GET',
+            contentType: "application/json",
+            jsonpCallback: "jsonRead" ,
+            data: { 
+                
+                sdate: sdate,
+                edate: edate
+            },
+            headers:{'Accept': 'application/json', 'X-Request': 'JSON'},
+            success: function(response) {
+            	window.data=response;
+            	
+                displayTable(response);
+            },
+            error: function(error) {
+              
+                console.log(error);
+            }
+        });
+    	
+    	
+    	
+    }
+    
+  	
+    function submitUrl(){
+    	var str = $("#urlScanner").val();
+    	if( str == '' || !str.startsWith("http")){
+    		alert('Please provide proper Url. Url should be starting with http or https');
+    		return;
+    		
+    	}
+   	 
+   	 $.ajax({
+   		type: "POST",
+        url: "http://localhost:8080/submit/url",
+        data: { 
+           
+            url: $("#urlScanner").val()
+        },
+        success: function(result) {
+        	 window.location.reload(true);
+            alert('Url Scan is Done!!!');
+        },
+        error: function(result) {
+        	 
+            alert('Please check URL. Some Error Occured!!');
+            window.location.reload(true);	
+        }
+   		 
+   	 });
+   	 
+    }
+    
+
+    function loadLastAccessedTableData(){
+    	
+        
+         $.ajax({
+                url: 'http://localhost:8080/list',
+              
+                type: 'GET',
+                contentType: "application/json",
+                jsonpCallback: "jsonRead" ,
+                headers:{'Accept': 'application/json', 'X-Request': 'JSON'},
+                success: function(response) {
+                	window.data=response;
+                  
+                    displayTable(response);
+                },
+                error: function(error) {
+                  
+                    console.log(error);
+                }
+            });
+      }
+    function displayTable(urlData){
+    	$('#urlTable').empty();
+    	var table = document.createElement('table');
+    	$("#urlTable").append(table);
+    	
+    	var tblHeader = ['URL', 'REDIRECT URL', 'STATUS', 'IP ADDRESS', 'WEBSITE TITLE', 'SUBMITTED ON']; 
+    	var tr = document.createElement('tr');
+    	table.append(tr);
+    	for(var i = 0; i< tblHeader.length; i++){
+    		var th = document.createElement('th');
+    		tr.append(th);
+        ///th.html('url');
+        th.innerHTML = tblHeader[i];
+    	}
+    	
+    	var tblHeaderValue = ['url', 'redirectUrl', 'status', 'ipAddress','websiteTitle','submittedOn']; 
+    	for(var i = 0; i< urlData.length; i++){
+    		var tr = document.createElement('tr');
+        	table.append(tr);
+    		
+    		for(var j = 0; j< tblHeaderValue.length; j++){
+    			var td = document.createElement('td');
+        		tr.append(td);
+        		if (tblHeaderValue[j] == 'url') {
+        			var link = document.createElement('a');
+                    link.setAttribute('href', 'report.html?urlData='+urlData[i]['urlId']);
+                    link.setAttribute('target', "_blank");
+                    var linkText = document.createTextNode(urlData[i][tblHeaderValue[j]]);
+                    link.appendChild(linkText);
+                    
+                    td.appendChild(link);
+                   
+        			
+       		}else if (tblHeaderValue[j] == 'status') {
+        			if(urlData[i][tblHeaderValue[j]] == '0'){
+        				td.innerHTML = 'FAILED';
+        			}else{
+        				td.innerHTML = 'SUCCESS';
+        			}
+        			
+       		}else if (tblHeaderValue[j] == 'submittedOn') {
+        			
+        			 td.innerHTML = FormatJsonDate(urlData[i][tblHeaderValue[j]]);
+        		}else{
+                td.innerHTML = urlData[i][tblHeaderValue[j]];
+        		}
+        	}
+        ///th.html('url');
+       
+    	}
+    }
+    
+    function FormatJsonDate(jsonDt) 
+    {              
+    	var date =  new Date(jsonDt);                                             
+        //return date.toJSON().slice(0, 10).split("-").reverse().join("/");
+        return date.toString();
+    }
+  
+    </script>
+    
+    
+    
+  </body>
+
+</html>
